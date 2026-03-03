@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Java OOP Mastery Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(10px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+        .progress-transition { transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .btn-active-effect:active { transform: scale(0.98); }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans min-h-screen selection:bg-blue-100">
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-white/90 backdrop-blur-sm hidden flex-col items-center justify-center z-50">
+        <i data-lucide="loader-2" class="w-12 h-12 text-blue-600 animate-spin mb-4"></i>
+        <p id="loadingText" class="text-slate-600 font-bold animate-pulse">Synchronizing...</p>
+    </div>
+
+    <div class="max-w-2xl mx-auto px-4 py-8 md:py-12">
+        <!-- Header -->
+        <header class="mb-8 text-center fade-in">
+            <h1 class="text-3xl md:text-4xl font-black bg-gradient-to-br from-blue-600 to-indigo-700 bg-clip-text text-transparent italic">JAVA OOP QUIZ</h1>
+            <p class="text-slate-400 text-xs font-bold uppercase tracking-[0.2em] mt-2">Department of Computer Science</p>
+        </header>
+
+        <!-- Notification Center -->
+        <div id="errorBox" class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-xl hidden animate-bounce">
+            <div class="flex items-center gap-3">
+                <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                <span id="errorMessage" class="text-sm font-bold"></span>
+            </div>
+        </div>
+
+        <!-- SCREEN: LOGIN -->
+        <div id="screen-home" class="screen bg-white rounded-[2.5rem] shadow-xl p-8 md:p-12 border border-slate-100 fade-in">
+            <div class="space-y-6">
+                <div class="space-y-2">
+                    <label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Academic Section</label>
+                    <select id="sectionSelect" class="w-full p-4 rounded-2xl border-2 border-slate-100 focus:border-blue-500 outline-none transition-all appearance-none bg-slate-50 cursor-pointer font-bold text-slate-700">
+                        <option value="">Select Section</option>
+                        <option value="10">Section 10</option>
+                        <option value="11">Section 11</option>
+                    </select>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Matric Number</label>
+                    <select id="matricSelect" disabled class="w-full p-4 rounded-2xl border-2 border-slate-100 focus:border-blue-500 outline-none transition-all appearance-none bg-slate-50 disabled:opacity-40 cursor-pointer font-bold text-slate-700">
+                        <option value="">Select Matric No</option>
+                    </select>
+                </div>
+
+                <div class="flex flex-col gap-3 pt-4">
+                    <button onclick="enterPortal()" class="btn-active-effect w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-2xl shadow-xl shadow-blue-200 transition-all flex items-center justify-center gap-3">
+                        ENTER PORTAL <i data-lucide="log-in" class="w-5 h-5"></i>
+                    </button>
+                    <button onclick="fetchHistory(false)" class="w-full py-4 text-slate-500 font-bold hover:text-blue-600 transition-colors text-sm">
+                        View Past Results
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN: DASHBOARD -->
+        <div id="screen-menu" class="screen hidden space-y-6 fade-in">
+            <div class="flex items-center justify-between bg-white p-4 rounded-3xl border border-slate-100 shadow-sm">
+                <div class="flex items-center gap-3 max-w-[80%]">
+                    <div class="w-10 h-10 flex-shrink-0 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black italic">J</div>
+                    <div class="truncate">
+                        <p id="userBadge" class="font-black text-slate-800 text-sm leading-none truncate"></p>
+                        <p id="matricBadge" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1"></p>
+                    </div>
+                </div>
+                <button onclick="navigateTo('home')" class="p-2 hover:bg-red-50 text-red-400 rounded-xl transition-colors">
+                    <i data-lucide="log-out" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="flex bg-slate-200/50 p-1.5 rounded-2xl">
+                <button id="tabQuizzes" onclick="switchTab('quizzes')" class="flex-1 py-3 rounded-xl font-black text-sm transition-all bg-white shadow-sm text-blue-600">QUIZZES</button>
+                <button id="tabHistory" onclick="switchTab('history')" class="flex-1 py-3 rounded-xl font-black text-sm transition-all text-slate-500 hover:text-slate-700">MY RESULTS</button>
+            </div>
+
+            <div id="contentQuizzes" class="space-y-4 fade-in">
+                <div id="topicButtons" class="grid grid-cols-1 gap-4"></div>
+            </div>
+
+            <div id="contentHistory" class="hidden fade-in">
+                <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                    <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+                        <h3 class="font-black text-slate-800">Past Attempts</h3>
+                        <button onclick="fetchHistory(false)" class="p-2 bg-slate-50 rounded-lg text-slate-400 hover:text-blue-500 transition-colors">
+                            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-50/80 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                <tr>
+                                    <th class="px-6 py-4">Quiz Topic</th>
+                                    <th class="px-6 py-4">Date</th>
+                                    <th class="px-6 py-4 text-right">Score</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTableBody" class="divide-y divide-slate-50"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN: QUIZ -->
+        <div id="screen-quiz" class="screen hidden bg-white rounded-[2.5rem] shadow-2xl p-8 md:p-12 border border-slate-100 fade-in">
+            <div class="flex items-center gap-3 mb-6 pb-6 border-b border-slate-50">
+                <div class="w-10 h-10 flex-shrink-0 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600">
+                    <i data-lucide="user" class="w-5 h-5"></i>
+                </div>
+                <div class="truncate">
+                    <p id="quizUserBadge" class="font-black text-slate-800 text-xs leading-none truncate"></p>
+                    <p id="quizMatricBadge" class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1"></p>
+                </div>
+            </div>
+            <div class="mb-10">
+                <div class="flex justify-between items-end mb-4">
+                    <span id="questionCountLabel" class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">QUESTION 1 / 5</span>
+                    <span id="percentLabel" class="text-2xl font-black text-blue-600">0%</span>
+                </div>
+                <div class="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div id="progressBar" class="h-full bg-blue-600 progress-transition rounded-full" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <h3 id="questionText" class="text-xl md:text-2xl font-bold text-slate-800 mb-8 leading-snug"></h3>
+            
+            <div id="optionsContainer" class="grid gap-3 mb-6"></div>
+
+            <div id="feedbackContainer" class="hidden fade-in space-y-4">
+                <div id="explanationBox" class="p-5 rounded-2xl bg-slate-50 border border-slate-100">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i id="feedbackIcon" class="w-5 h-5"></i>
+                        <span id="feedbackStatus" class="font-black text-xs uppercase tracking-widest"></span>
+                    </div>
+                    <p id="explanationText" class="text-sm text-slate-600 leading-relaxed font-medium"></p>
+                </div>
+                <button id="nextBtn" onclick="proceedToNext()" class="w-full py-4 bg-slate-800 text-white font-black rounded-2xl shadow-xl transition-all btn-active-effect flex items-center justify-center gap-2">
+                    NEXT QUESTION <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- SCREEN: RESULT -->
+        <div id="screen-result" class="screen hidden bg-white rounded-[2.5rem] shadow-2xl p-10 md:p-16 border border-slate-100 text-center fade-in">
+            <div class="flex flex-col items-center mb-8">
+                <p id="resultUserBadge" class="font-black text-slate-800 text-sm"></p>
+                <p id="resultMatricBadge" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1"></p>
+            </div>
+            <div class="mb-8 inline-flex p-6 rounded-[2rem] bg-yellow-50 text-yellow-500 relative">
+                <i data-lucide="trophy" class="w-16 h-16"></i>
+                <div class="absolute -bottom-2 -right-2 bg-blue-600 text-white p-2 rounded-full border-4 border-white">
+                    <i data-lucide="check" class="w-4 h-4"></i>
+                </div>
+            </div>
+            
+            <h2 class="text-3xl font-black text-slate-800 mb-2">Quiz Finished!</h2>
+            <p id="resultTopicLabel" class="text-slate-400 font-bold uppercase text-xs tracking-widest mb-10"></p>
+
+            <div class="bg-slate-50 rounded-[2rem] p-10 mb-10 inline-block min-w-[240px] border border-slate-100 shadow-inner">
+                <div id="finalScoreDisplay" class="text-6xl font-black text-blue-600 mb-2">0/5</div>
+                <p class="text-xs font-black text-slate-300 uppercase tracking-widest">Final Accuracy</p>
+            </div>
+
+            <button id="submitResultBtn" onclick="submitScore()" class="btn-active-effect w-full bg-green-600 hover:bg-green-700 text-white font-black py-5 rounded-2xl shadow-xl shadow-green-100 transition-all flex items-center justify-center gap-3">
+                SUBMIT RESULTS <i data-lucide="send" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <footer class="mt-16 text-center">
+            <p class="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em]">Secure Assessment Interface v3.2</p>
+        </footer>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbxdUgLHVknpvqOSW3DtvHue8K_jMQvm8B2vicLSf2ipzg3p3Q-QQSF79xXHYv4kw_gZug/exec";
+
+        const QUIZ_DATA = {
+            "Class Diagram": [
+                { q: "Which symbol represents a private attribute in a class diagram?", options: ["+", "-", "#", "~"], correct: 1, explanation: "In UML class diagrams, '-' denotes private, '+' denotes public, and '#' denotes protected visibility." },
+                { q: "An arrow with a hollow diamond represents what?", options: ["Inheritance", "Realization", "Aggregation", "Composition"], correct: 2, explanation: "A hollow diamond represents Aggregation (a 'has-a' relationship), whereas a filled diamond represents Composition." },
+                { q: "How is an interface labeled in a class diagram?", options: ["<<interface>>", "[[interface]]", "(interface)", "interface:"], correct: 0, explanation: "UML uses stereotypes like '<<interface>>' enclosed in guillemets to identify special types of classifiers." },
+                { q: "In UML, a dashed line with a hollow arrow indicates:", options: ["Association", "Dependency", "Implementation", "Generalization"], correct: 2, explanation: "A dashed line with a hollow arrow indicates Implementation (Realization), which is when a class implements an interface." },
+                { q: "Multiplicity '0..*' means:", options: ["Exactly zero", "Exactly one", "Zero or more", "One or more"], correct: 2, explanation: "In UML multiplicity, '0' represents the lower bound and '*' represents an unlimited upper bound (many)." }
+            ],
+            "Abstraction": [
+                { q: "Can you create an object from an abstract class?", options: ["Yes", "No", "Only if it has a constructor", "Only in the same package"], correct: 1, explanation: "Abstract classes are incomplete blueprints and cannot be instantiated directly; they must be extended by concrete classes." },
+                { q: "Which keyword is used to implement an interface?", options: ["extends", "abstract", "implements", "using"], correct: 2, explanation: "Classes use the 'implements' keyword to provide bodies for the methods defined in an interface." },
+                { q: "A method without a body is called an:", options: ["Empty method", "Abstract method", "Virtual method", "Void method"], correct: 1, explanation: "An abstract method is declared without an implementation (body) and must be overridden in a subclass." },
+                { q: "In Java, can a class implement multiple interfaces?", options: ["Yes", "No", "Only 2", "Only if it's abstract"], correct: 0, explanation: "Java supports multiple inheritance through interfaces, allowing a single class to implement as many interfaces as needed." },
+                { q: "Which of these is 100% abstract before Java 8?", options: ["Abstract class", "Interface", "Final class", "Concrete class"], correct: 1, explanation: "Prior to default methods introduced in Java 8, interfaces could only contain abstract methods and constants." }
+            ],
+            "Polymorphism": [
+                { q: "Overloading is an example of:", options: ["Compile-time polymorphism", "Runtime polymorphism", "Dynamic binding", "Inheritance"], correct: 0, explanation: "Method Overloading is resolved by the compiler based on the reference type and parameters, hence 'compile-time' or 'static' polymorphism." },
+                { q: "Which annotation is used when overriding a method?", options: ["@Abstract", "@New", "@Override", "@Replace"], correct: 2, explanation: "The @Override annotation helps prevent errors by ensuring the compiler checks that the method actually overrides a parent method." },
+                { q: "Method overriding requires the same:", options: ["Class name", "Access modifier only", "Signature and return type", "Variable names"], correct: 2, explanation: "To override a method, the subclass method must have the exact same signature (name and parameters) and a compatible return type." },
+                { q: "Dynamic Method Dispatch handles polymorphism at:", options: ["Compile time", "Runtime", "Installation time", "None"], correct: 1, explanation: "Dynamic Method Dispatch is the mechanism where a call to an overridden method is resolved at runtime rather than compile time." },
+                { q: "Can a static method be overridden?", options: ["Yes", "No", "Only if public", "Only in interfaces"], correct: 1, explanation: "Static methods belong to the class rather than instances; they can be 'hidden' but not overridden like instance methods." }
+            ],
+            "Inheritance": [
+                { q: "Which keyword is used to inherit a class?", options: ["implements", "inherits", "extends", "super"], correct: 2, explanation: "The 'extends' keyword is used to create a subclass that inherits attributes and methods from a superclass." },
+                { q: "Which class is the root of all classes in Java?", options: ["Main", "Root", "Object", "System"], correct: 2, explanation: "In Java, every class implicitly extends the 'java.lang.Object' class if no other superclass is specified." },
+                { q: "Java supports which type of inheritance for classes?", options: ["Single", "Multiple", "Hybrid", "All of these"], correct: 0, explanation: "Java allows a class to extend only one superclass (Single Inheritance) to avoid the complexity and ambiguity of the diamond problem." },
+                { q: "What does the 'super' keyword do?", options: ["Exits the program", "Calls parent constructor/method", "Creates a new class", "Deletes an object"], correct: 1, explanation: "The 'super' keyword is a reference variable used to refer to immediate parent class objects or methods." },
+                { q: "A 'final' class cannot be:", options: ["Instantiated", "Inherited", "Public", "Abstract"], correct: 1, explanation: "The 'final' keyword on a class prevents other classes from extending it, effectively ending the inheritance chain." }
+            ],
+            "Encapsulation": [
+                { q: "Encapsulation is also known as:", options: ["Data Hiding", "Inheritance", "Polymorphism", "Abstraction"], correct: 0, explanation: "Encapsulation wraps data and code into a single unit, hiding internal state from outside interference." },
+                { q: "Which access modifier provides the highest restriction?", options: ["public", "protected", "default", "private"], correct: 3, explanation: "The 'private' modifier restricts visibility to the containing class only, which is the cornerstone of encapsulation." },
+                { q: "Standard practice for encapsulation involves:", options: ["Public variables", "Private variables and Getters/Setters", "No variables", "Global variables"], correct: 1, explanation: "Variables should be private to prevent direct access, using public getter and setter methods to control how they are read or modified." },
+                { q: "Which is a benefit of encapsulation?", options: ["Faster code", "Less memory", "Maintainability and Control", "Multiple Inheritance"], correct: 2, explanation: "Encapsulation makes code easier to maintain, test, and debug by localizing changes to the specific class." },
+                { q: "Getters and Setters are also called:", options: ["Constructors", "Destructors", "Accessors and Mutators", "Logic gates"], correct: 2, explanation: "Getters provide access to data (Accessors), and Setters allow mutation of data (Mutators) under defined logic." }
+            ]
+        };
+
+        // State
+        let students = [];
+        let state = {
+            currentScreen: 'home',
+            activeTab: 'quizzes',
+            selectedSection: '',
+            selectedMatric: '',
+            selectedName: '',
+            userHistory: [],
+            activeTopic: null,
+            currentQIndex: 0,
+            score: 0,
+            isAnswered: false,
+            selectedIdx: null
+        };
+
+        // Elements
+        const sectionSelect = document.getElementById('sectionSelect');
+        const matricSelect = document.getElementById('matricSelect');
+        const feedbackContainer = document.getElementById('feedbackContainer');
+        const explanationText = document.getElementById('explanationText');
+        const feedbackStatus = document.getElementById('feedbackStatus');
+        const feedbackIcon = document.getElementById('feedbackIcon');
+
+        window.onload = () => {
+            lucide.createIcons();
+            fetchStudentList();
+        };
+
+        function navigateTo(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+            document.getElementById(`screen-${screenId}`).classList.remove('hidden');
+            state.currentScreen = screenId;
+            
+            if (screenId === 'menu' || screenId === 'quiz' || screenId === 'result') {
+                const nameText = state.selectedName;
+                const matricText = `ID: ${state.selectedMatric}`;
+                
+                if (screenId === 'menu') {
+                    document.getElementById('userBadge').innerText = nameText;
+                    document.getElementById('matricBadge').innerText = matricText;
+                    switchTab('quizzes');
+                }
+                if (screenId === 'quiz') {
+                    document.getElementById('quizUserBadge').innerText = nameText;
+                    document.getElementById('quizMatricBadge').innerText = matricText;
+                }
+                if (screenId === 'result') {
+                    document.getElementById('resultUserBadge').innerText = nameText;
+                    document.getElementById('resultMatricBadge').innerText = matricText;
+                }
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function switchTab(tabId) {
+            state.activeTab = tabId;
+            const isQ = tabId === 'quizzes';
+            ['tabQuizzes', 'tabHistory'].forEach(t => {
+                const btn = document.getElementById(t);
+                const active = t.toLowerCase().includes(tabId);
+                btn.classList.toggle('bg-white', active);
+                btn.classList.toggle('shadow-sm', active);
+                btn.classList.toggle('text-blue-600', active);
+                btn.classList.toggle('text-slate-500', !active);
+            });
+            document.getElementById('contentQuizzes').classList.toggle('hidden', !isQ);
+            document.getElementById('contentHistory').classList.toggle('hidden', isQ);
+            if (isQ) renderMenu(); else renderHistoryTable();
+        }
+
+        function showLoading(show, text = "Synchronizing...") {
+            document.getElementById('loadingText').innerText = text;
+            document.getElementById('loadingOverlay').classList.toggle('hidden', !show);
+        }
+
+        async function enterPortal() {
+            const m = matricSelect.value;
+            if (!state.selectedSection || !m) return;
+            state.selectedMatric = m;
+            const s = students.find(x => x.matric === m);
+            if (s) state.selectedName = s.name;
+            await fetchHistory(false); 
+            navigateTo('menu');
+        }
+
+        async function fetchStudentList() {
+            showLoading(true);
+            try {
+                const r = await fetch(API_URL);
+                students = await r.json();
+            } catch (e) {} finally { showLoading(false); }
+        }
+
+        async function fetchHistory(silent = true) {
+            const m = state.selectedMatric || matricSelect.value;
+            if (!silent) showLoading(true);
+            try {
+                const r = await fetch(`${API_URL}?matric=${m}`);
+                state.userHistory = await r.json();
+                if (!silent) renderHistoryTable();
+            } catch (e) {} finally { if (!silent) showLoading(false); }
+        }
+
+        async function submitScore() {
+            showLoading(true);
+            try {
+                await fetch(API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify({ section: state.selectedSection, matric: state.selectedMatric, quizName: state.activeTopic, score: state.score })
+                });
+                state.userHistory.push({ quizName: state.activeTopic, score: state.score, timestamp: 'Now' });
+                setTimeout(() => { showLoading(false); switchTab('history'); navigateTo('menu'); }, 1000);
+            } catch (e) { showLoading(false); }
+        }
+
+        sectionSelect.onchange = (e) => {
+            state.selectedSection = e.target.value;
+            matricSelect.disabled = !state.selectedSection;
+            let options = '<option value="">Select Matric No</option>';
+            if (state.selectedSection) {
+                students.filter(x => String(x.section) === state.selectedSection).forEach(x => options += `<option value="${x.matric}">${x.matric}</option>`);
+            }
+            matricSelect.innerHTML = options;
+        };
+
+        function renderMenu() {
+            const container = document.getElementById('topicButtons');
+            const done = state.userHistory.map(h => h.quizName);
+            container.innerHTML = Object.keys(QUIZ_DATA).map((topic, i) => {
+                const isDone = done.includes(topic);
+                return `
+                    <button onclick="${isDone ? '' : `startQuiz('${topic}')`}" class="w-full bg-white p-6 rounded-3xl border-2 transition-all flex items-center justify-between group ${isDone ? 'opacity-50 grayscale cursor-not-allowed border-slate-50' : 'border-slate-50 hover:border-blue-200 hover:shadow-md btn-active-effect'}">
+                        <div class="flex items-center gap-4 text-left">
+                            <div class="w-12 h-12 ${isDone ? 'bg-slate-100' : 'bg-blue-50 group-hover:bg-blue-600'} rounded-2xl flex items-center justify-center font-black ${isDone ? 'text-slate-300' : 'text-blue-600 group-hover:text-white'} transition-all">${i + 1}</div>
+                            <div>
+                                <h3 class="font-black text-slate-800">${topic}</h3>
+                                <p class="text-[10px] font-black uppercase tracking-widest ${isDone ? 'text-green-600' : 'text-slate-400'}">${isDone ? 'ALREADY ATTEMPTED' : '5 QUESTIONS • NOT STARTED'}</p>
+                            </div>
+                        </div>
+                        <i data-lucide="${isDone ? 'lock' : 'chevron-right'}" class="w-5 h-5 ${isDone ? 'text-slate-200' : 'text-blue-100 group-hover:text-blue-500'}"></i>
+                    </button>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function renderHistoryTable() {
+            const tbody = document.getElementById('historyTableBody');
+            if (!state.userHistory.length) {
+                tbody.innerHTML = '<tr><td colspan="3" class="px-6 py-12 text-center text-slate-400 font-bold italic">No records found.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = state.userHistory.map(item => `
+                <tr class="hover:bg-slate-50/50 transition-colors">
+                    <td class="px-6 py-4 font-black text-slate-700">${item.quizName}</td>
+                    <td class="px-6 py-4 text-slate-400 text-xs font-bold">${item.timestamp || 'Recorded'}</td>
+                    <td class="px-6 py-4 text-right font-black ${item.score >= 3 ? 'text-green-600' : 'text-orange-500'}">${item.score} / 5</td>
+                </tr>
+            `).join('');
+        }
+
+        function startQuiz(topic) {
+            state.activeTopic = topic;
+            state.currentQIndex = 0;
+            state.score = 0;
+            state.isAnswered = false;
+            renderQuestion();
+            navigateTo('quiz');
+        }
+
+        function renderQuestion() {
+            const q = QUIZ_DATA[state.activeTopic][state.currentQIndex];
+            const prog = ((state.currentQIndex + 1) / 5) * 100;
+            document.getElementById('progressBar').style.width = `${prog}%`;
+            document.getElementById('percentLabel').innerText = `${Math.round(prog)}%`;
+            document.getElementById('questionCountLabel').innerText = `QUESTION ${state.currentQIndex + 1} / 5`;
+            document.getElementById('questionText').innerText = q.q;
+            
+            feedbackContainer.classList.add('hidden');
+            
+            const container = document.getElementById('optionsContainer');
+            container.innerHTML = q.options.map((opt, i) => {
+                const char = String.fromCharCode(65 + i);
+                return `
+                    <button id="opt-${i}" onclick="handleAnswer(${i})" class="text-left p-5 rounded-2xl border-2 border-slate-50 hover:border-blue-500 hover:bg-blue-50/30 transition-all flex items-center gap-4 group disabled:cursor-default">
+                        <span id="label-${i}" class="w-10 h-10 flex-shrink-0 bg-slate-50 group-hover:bg-blue-500 rounded-xl flex items-center justify-center font-black text-slate-400 group-hover:text-white transition-all text-sm">${char}</span>
+                        <span id="text-${i}" class="font-bold text-slate-700 group-hover:text-slate-900">${opt}</span>
+                    </button>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function handleAnswer(idx) {
+            if (state.isAnswered) return;
+            state.isAnswered = true;
+            state.selectedIdx = idx;
+            const correct = QUIZ_DATA[state.activeTopic][state.currentQIndex].correct;
+            const isCorrect = idx === correct;
+            if (isCorrect) state.score++;
+
+            // Highlight answers
+            QUIZ_DATA[state.activeTopic][state.currentQIndex].options.forEach((_, i) => {
+                const btn = document.getElementById(`opt-${i}`);
+                const label = document.getElementById(`label-${i}`);
+                btn.disabled = true;
+                if (i === correct) {
+                    btn.className = "text-left p-5 rounded-2xl border-2 border-green-500 bg-green-50 flex items-center gap-4 group transition-all";
+                    label.className = "w-10 h-10 flex-shrink-0 bg-green-500 rounded-xl flex items-center justify-center font-black text-white transition-all text-sm";
+                } else if (i === idx) {
+                    btn.className = "text-left p-5 rounded-2xl border-2 border-red-500 bg-red-50 flex items-center gap-4 group transition-all";
+                    label.className = "w-10 h-10 flex-shrink-0 bg-red-500 rounded-xl flex items-center justify-center font-black text-white transition-all text-sm";
+                } else {
+                    btn.className = "text-left p-5 rounded-2xl border-2 border-slate-100 bg-white opacity-40 flex items-center gap-4 group transition-all";
+                    label.className = "w-10 h-10 flex-shrink-0 bg-slate-100 rounded-xl flex items-center justify-center font-black text-slate-300 transition-all text-sm";
+                }
+            });
+
+            // Show feedback
+            feedbackStatus.innerText = isCorrect ? "Excellent! Correct Answer" : "Incorrect Choice";
+            feedbackStatus.className = isCorrect ? "font-black text-xs uppercase tracking-widest text-green-600" : "font-black text-xs uppercase tracking-widest text-red-600";
+            feedbackIcon.setAttribute('data-lucide', isCorrect ? 'check-circle-2' : 'alert-circle');
+            feedbackIcon.className = isCorrect ? "w-5 h-5 text-green-500" : "w-5 h-5 text-red-500";
+            explanationText.innerText = QUIZ_DATA[state.activeTopic][state.currentQIndex].explanation;
+            
+            feedbackContainer.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function proceedToNext() {
+            if (state.currentQIndex < 4) {
+                state.currentQIndex++;
+                state.isAnswered = false;
+                renderQuestion();
+            } else {
+                finishQuiz();
+            }
+        }
+
+        function finishQuiz() {
+            document.getElementById('resultTopicLabel').innerText = state.activeTopic;
+            document.getElementById('finalScoreDisplay').innerText = `${state.score}/5`;
+            navigateTo('result');
+            lucide.createIcons();
+        }
+    </script>
+</body>
+</html>
